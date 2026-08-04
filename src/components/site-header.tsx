@@ -3,7 +3,7 @@ import { Coins, FlaskConical } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { loginWithGoogle, logout } from "@/lib/actions/auth-actions";
+import { logout } from "@/lib/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -81,7 +81,6 @@ export async function SiteHeader() {
           <MobileNav
             links={NAV_LINKS}
             isLoggedIn={!!session?.user}
-            onLogin={loginWithGoogle}
             onLogout={logout}
           />
         </div>

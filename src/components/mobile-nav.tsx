@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -20,16 +20,10 @@ type NavLink = { href: string; label: string };
 type MobileNavProps = {
   links: NavLink[];
   isLoggedIn: boolean;
-  onLogin: () => void;
   onLogout: () => void;
 };
 
-export function MobileNav({
-  links,
-  isLoggedIn,
-  onLogin,
-  onLogout,
-}: MobileNavProps) {
+export function MobileNav({ links, isLoggedIn, onLogout }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -72,14 +66,11 @@ export function MobileNav({
               Se déconnecter
             </Button>
           ) : (
-            <Button
-              onClick={() => {
-                setOpen(false);
-                onLogin();
-              }}
-            >
-              Se connecter avec Google
-            </Button>
+            <SheetClose asChild>
+              <Link href="/login" className={buttonVariants()}>
+                Se connecter
+              </Link>
+            </SheetClose>
           )}
         </SheetFooter>
       </SheetContent>

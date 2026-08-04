@@ -2,6 +2,13 @@ import { z } from "zod";
 import { Platform } from "@/generated/prisma/enums";
 import { FEEDBACK_TAGS } from "@/lib/constants";
 
+export const loginSchema = z.object({
+  name: z.string().min(2, "2 caractères minimum").max(60, "60 caractères maximum"),
+  email: z.email("Email invalide"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+
 export const publishAppSchema = z.object({
   name: z.string().min(2, "2 caractères minimum").max(80, "80 caractères maximum"),
   description: z
