@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,21 +17,53 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { loginWithCredentials } from "@/lib/actions/auth-actions";
-import { loginSchema, type LoginInput } from "@/lib/validation";
+import { loginWithCredentials, requestLoginCode } from "@/lib/actions/auth-actions";
+import { requestCodeSchema, type RequestCodeInput } from "@/lib/validation";
+
+const codeOnlySchema = z.object({
+  code: z.string().length(6, "Le code doit contenir 6 chiffres"),
+});
+type CodeOnlyInput = z.infer<typeof codeOnlySchema>;
 
 export function LoginForm() {
+  const [step, setStep] = React.useState<"request" | "verify">("request");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [identity, setIdentity] = React.useState<RequestCodeInput | null>(null);
 
-  const form = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  const requestForm = useForm<RequestCodeInput>({
+    resolver: zodResolver(requestCodeSchema),
     defaultValues: { name: "", email: "" },
   });
 
-  async function onSubmit(values: LoginInput) {
+  const codeForm = useForm<CodeOnlyInput>({
+    resolver: zodResolver(codeOnlySchema),
+    defaultValues: { code: "" },
+  });
+
+  async function onRequestCode(values: RequestCodeInput) {
     setIsSubmitting(true);
     try {
-      const result = await loginWithCredentials(values);
+      const result = await requestLoginCode(values);
+      if (result?.error) {
+        toast.error(result.error);
+        setIsSubmitting(false);
+        return;
+      }
+      setIdentity(values);
+      setStep("verify");
+      toast.success("Code envoyé ! Vérifiez votre boîte mail.");
+    } catch {
+      toast.error("Une erreur est survenue. Réessayez.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function onVerifyCode(values: CodeOnlyInput) {
+    if (!identity) return;
+    setIsSubmitting(true);
+    try {
+      const result = await loginWithCredentials({ ...identity, code: values.code });
       if (result?.error) {
         toast.error(result.error);
         setIsSubmitting(false);
@@ -41,11 +74,59 @@ export function LoginForm() {
     }
   }
 
+  if (step === "verify" && identity) {
+    return (
+      <Form {...codeForm}>
+        <form onSubmit={codeForm.handleSubmit(onVerifyCode)} className="space-y-4">
+          <button
+            type="button"
+            onClick={() => setStep("request")}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            Modifier l&apos;email
+          </button>
+
+          <p className="text-sm text-muted-foreground">
+            Code envoyé à{" "}
+            <span className="font-medium text-foreground">{identity.email}</span>
+          </p>
+
+          <FormField
+            control={codeForm.control}
+            name="code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Code de vérification</FormLabel>
+                <FormControl>
+                  <Input
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="123456"
+                    autoComplete="one-time-code"
+                    className="text-center text-lg tracking-[0.5em]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="animate-spin" />}
+            Se connecter
+          </Button>
+        </form>
+      </Form>
+    );
+  }
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <Form {...requestForm}>
+      <form onSubmit={requestForm.handleSubmit(onRequestCode)} className="space-y-4">
         <FormField
-          control={form.control}
+          control={requestForm.control}
           name="name"
           render={({ field }) => (
             <FormItem>
@@ -59,7 +140,7 @@ export function LoginForm() {
         />
 
         <FormField
-          control={form.control}
+          control={requestForm.control}
           name="email"
           render={({ field }) => (
             <FormItem>
@@ -79,7 +160,7 @@ export function LoginForm() {
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="animate-spin" />}
-          Continuer
+          Recevoir le code
         </Button>
       </form>
     </Form>

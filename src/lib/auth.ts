@@ -12,12 +12,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         name: { label: "Nom", type: "text" },
         email: { label: "Email", type: "email" },
+        code: { label: "Code", type: "text" },
       },
       async authorize(credentials) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
-        const { name, email } = parsed.data;
+        const { name, email, code } = parsed.data;
+
+        const loginCode = await prisma.loginCode.findFirst({
+          where: { email, code, expiresAt: { gt: new Date() } },
+          orderBy: { createdAt: "desc" },
+        });
+        if (!loginCode) return null;
+
+        await prisma.loginCode.deleteMany({ where: { email } });
 
         const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) {
