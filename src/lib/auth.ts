@@ -69,7 +69,7 @@ const { handlers, auth: rawAuth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 60 * 24 * 60 * 60 },
   trustHost: true,
   pages: {
     signIn: "/login",
