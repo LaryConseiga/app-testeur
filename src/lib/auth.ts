@@ -20,43 +20,48 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { name, email, code } = parsed.data;
 
-        const loginCode = await prisma.loginCode.findFirst({
-          where: { email, code, expiresAt: { gt: new Date() } },
-          orderBy: { createdAt: "desc" },
-        });
-        if (!loginCode) return null;
+        try {
+          const loginCode = await prisma.loginCode.findFirst({
+            where: { email, code, expiresAt: { gt: new Date() } },
+            orderBy: { createdAt: "desc" },
+          });
+          if (!loginCode) return null;
 
-        await prisma.loginCode.deleteMany({ where: { email } });
+          await prisma.loginCode.deleteMany({ where: { email } });
 
-        const existing = await prisma.user.findUnique({ where: { email } });
-        if (existing) {
+          const existing = await prisma.user.findUnique({ where: { email } });
+          if (existing) {
+            return {
+              id: existing.id,
+              name: existing.name,
+              email: existing.email,
+              image: existing.image,
+            };
+          }
+
+          const created = await prisma.user.create({
+            data: { name, email },
+          });
+
+          await prisma.creditTransaction.create({
+            data: {
+              userId: created.id,
+              amount: WELCOME_CREDITS,
+              type: CreditTransactionType.WELCOME_BONUS,
+              description: "Crédit de bienvenue",
+            },
+          });
+
           return {
-            id: existing.id,
-            name: existing.name,
-            email: existing.email,
-            image: existing.image,
+            id: created.id,
+            name: created.name,
+            email: created.email,
+            image: created.image,
           };
+        } catch (error) {
+          console.error("authorize failed:", error);
+          return null;
         }
-
-        const created = await prisma.user.create({
-          data: { name, email },
-        });
-
-        await prisma.creditTransaction.create({
-          data: {
-            userId: created.id,
-            amount: WELCOME_CREDITS,
-            type: CreditTransactionType.WELCOME_BONUS,
-            description: "Crédit de bienvenue",
-          },
-        });
-
-        return {
-          id: created.id,
-          name: created.name,
-          email: created.email,
-          image: created.image,
-        };
       },
     }),
   ],

@@ -22,37 +22,38 @@ function generateCode() {
 export async function requestLoginCode(input: RequestCodeInput) {
   const { email } = requestCodeSchema.parse(input);
 
-  const recent = await prisma.loginCode.findFirst({
-    where: {
-      email,
-      createdAt: { gt: new Date(Date.now() - RESEND_COOLDOWN_SECONDS * 1000) },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-  if (recent) {
-    return {
-      error: "Un code a déjà été envoyé. Patientez une minute avant d'en redemander un.",
-    };
-  }
-
-  const code = generateCode();
-
-  await prisma.loginCode.deleteMany({ where: { email } });
-  await prisma.loginCode.create({
-    data: {
-      email,
-      code,
-      expiresAt: new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000),
-    },
-  });
-
   try {
-    await sendLoginCodeEmail(email, code);
-  } catch {
-    return { error: "Impossible d'envoyer l'email. Réessayez." };
-  }
+    const recent = await prisma.loginCode.findFirst({
+      where: {
+        email,
+        createdAt: { gt: new Date(Date.now() - RESEND_COOLDOWN_SECONDS * 1000) },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    if (recent) {
+      return {
+        error: "Un code a déjà été envoyé. Patientez une minute avant d'en redemander un.",
+      };
+    }
 
-  return { success: true };
+    const code = generateCode();
+
+    await prisma.loginCode.deleteMany({ where: { email } });
+    await prisma.loginCode.create({
+      data: {
+        email,
+        code,
+        expiresAt: new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000),
+      },
+    });
+
+    await sendLoginCodeEmail(email, code);
+
+    return { success: true };
+  } catch (error) {
+    console.error("requestLoginCode failed:", error);
+    return { error: "Impossible d'envoyer le code. Réessayez dans un instant." };
+  }
 }
 
 export async function loginWithCredentials(input: LoginInput) {
