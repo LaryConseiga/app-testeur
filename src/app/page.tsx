@@ -4,6 +4,7 @@ import { getAllTechStacks, getDiscoveryApps } from "@/lib/apps";
 import { Platform } from "@/generated/prisma/enums";
 import { AppCard } from "@/components/app-card";
 import { DiscoveryFilters } from "@/components/discovery-filters";
+import { DiscoveryPagination } from "@/components/discovery-pagination";
 
 export default async function DiscoveryPage(props: PageProps<"/">) {
   const searchParams = await props.searchParams;
@@ -12,16 +13,31 @@ export default async function DiscoveryPage(props: PageProps<"/">) {
     typeof searchParams.platform === "string" ? searchParams.platform : undefined;
   const techParam =
     typeof searchParams.tech === "string" ? searchParams.tech : undefined;
+  const pageParam =
+    typeof searchParams.page === "string" ? Number(searchParams.page) : 1;
 
   const platform =
     platformParam && platformParam in Platform
       ? (platformParam as Platform)
       : undefined;
 
-  const [apps, techStacks] = await Promise.all([
-    getDiscoveryApps({ platform, techStack: techParam }),
+  const [{ apps, page, totalPages }, techStacks] = await Promise.all([
+    getDiscoveryApps({
+      platform,
+      techStack: techParam,
+      page: Number.isFinite(pageParam) ? pageParam : 1,
+    }),
     getAllTechStacks(),
   ]);
+
+  function buildHref(targetPage: number) {
+    const params = new URLSearchParams();
+    if (platformParam) params.set("platform", platformParam);
+    if (techParam) params.set("tech", techParam);
+    if (targetPage > 1) params.set("page", String(targetPage));
+    const qs = params.toString();
+    return qs ? `/?${qs}` : "/";
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -51,11 +67,21 @@ export default async function DiscoveryPage(props: PageProps<"/">) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {apps.map((app) => (
-            <AppCard key={app.id} app={app} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {apps.map((app) => (
+              <AppCard key={app.id} app={app} />
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <DiscoveryPagination
+              currentPage={page}
+              totalPages={totalPages}
+              buildHref={buildHref}
+            />
+          </div>
+        </>
       )}
     </div>
   );

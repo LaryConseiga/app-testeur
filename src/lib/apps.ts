@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { AppStatus, Platform } from "@/generated/prisma/enums";
 
 export const STALE_THRESHOLD_DAYS = 5;
+export const APPS_PER_PAGE = 12;
 
 export function isStale(app: { status: AppStatus; createdAt: Date }) {
   if (app.status !== AppStatus.WAITING_TESTERS) return false;
@@ -13,6 +14,7 @@ export async function getDiscoveryApps(params: {
   platform?: Platform;
   techStack?: string;
   excludeUserId?: string;
+  page?: number;
 }) {
   const apps = await prisma.app.findMany({
     where: {
@@ -30,12 +32,24 @@ export async function getDiscoveryApps(params: {
     orderBy: { createdAt: "asc" },
   });
 
-  return apps.sort((a, b) => {
+  const sorted = apps.sort((a, b) => {
     const aStale = isStale(a) ? 1 : 0;
     const bStale = isStale(b) ? 1 : 0;
     if (aStale !== bStale) return bStale - aStale;
     return a.createdAt.getTime() - b.createdAt.getTime();
   });
+
+  const totalCount = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / APPS_PER_PAGE));
+  const page = Math.min(Math.max(1, params.page ?? 1), totalPages);
+  const start = (page - 1) * APPS_PER_PAGE;
+
+  return {
+    apps: sorted.slice(start, start + APPS_PER_PAGE),
+    page,
+    totalPages,
+    totalCount,
+  };
 }
 
 export async function getAllTechStacks() {

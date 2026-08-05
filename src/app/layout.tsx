@@ -12,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "TestSwap — Échangez des tests entre développeurs",
+  title: "TestSwapper — Échangez des tests entre développeurs",
   description:
     "Publiez vos apps pour les faire tester par d'autres étudiants et développeurs, et testez en retour grâce à un système de crédits.",
 };

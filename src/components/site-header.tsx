@@ -39,7 +39,7 @@ export async function SiteHeader() {
             <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <FlaskConical className="size-4" />
             </span>
-            <span className="hidden sm:inline">TestSwap</span>
+            <span className="hidden sm:inline">TestSwapper</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {NAV_LINKS.map((link) => (

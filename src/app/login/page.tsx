@@ -24,7 +24,7 @@ export default async function LoginPage() {
           <span className="mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <FlaskConical className="size-6" />
           </span>
-          <CardTitle className="text-xl">Connexion à TestSwap</CardTitle>
+          <CardTitle className="text-xl">Connexion à TestSwapper</CardTitle>
           <CardDescription>
             Entrez votre nom et votre email pour continuer. Aucun mot de passe
             requis.
