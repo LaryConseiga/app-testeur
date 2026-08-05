@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Coins, FlaskConical } from "lucide-react";
+import Image from "next/image";
+import { Coins } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -36,9 +37,14 @@ export async function SiteHeader() {
             href="/"
             className="flex items-center gap-2 font-semibold tracking-tight"
           >
-            <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <FlaskConical className="size-4" />
-            </span>
+            <Image
+              src="/logo-icon.png"
+              alt=""
+              width={32}
+              height={32}
+              className="size-8"
+              priority
+            />
             <span className="hidden sm:inline">TestSwapper</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">

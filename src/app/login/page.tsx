@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { FlaskConical } from "lucide-react";
+import Image from "next/image";
 
 import { auth } from "@/lib/auth";
 import {
@@ -21,9 +21,14 @@ export default async function LoginPage() {
     <div className="flex min-h-[calc(100dvh-4rem)] items-center justify-center px-4 py-12">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <span className="mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <FlaskConical className="size-6" />
-          </span>
+          <Image
+            src="/logo-icon.png"
+            alt="TestSwapper"
+            width={56}
+            height={56}
+            className="mb-2 size-14"
+            priority
+          />
           <CardTitle className="text-xl">Connexion à TestSwapper</CardTitle>
           <CardDescription>
             Entrez votre nom et votre email pour continuer. Aucun mot de passe
