@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { sendLoginCodeEmail } from "@/lib/email";
 import { signIn, signOut } from "@/lib/auth";
+import { isNextInternalSignal } from "@/lib/utils";
 import {
   requestCodeSchema,
   loginSchema,
@@ -51,6 +52,9 @@ export async function requestLoginCode(input: RequestCodeInput) {
 
     return { success: true };
   } catch (error) {
+    if (isNextInternalSignal(error)) {
+      throw error;
+    }
     console.error("requestLoginCode failed:", error);
     return { error: "Impossible d'envoyer le code. Réessayez dans un instant." };
   }

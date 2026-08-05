@@ -1,12 +1,13 @@
-import NextAuth from "next-auth";
+import NextAuth, { type Session } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { prisma } from "@/lib/prisma";
 import { WELCOME_CREDITS } from "@/lib/credits";
 import { CreditTransactionType } from "@/generated/prisma/enums";
 import { loginSchema } from "@/lib/validation";
+import { isNextInternalSignal } from "@/lib/utils";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const { handlers, auth: rawAuth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: {
@@ -59,6 +60,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             image: created.image,
           };
         } catch (error) {
+          if (isNextInternalSignal(error)) {
+            throw error;
+          }
           console.error("authorize failed:", error);
           return null;
         }
@@ -85,3 +89,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export async function auth(): Promise<Session | null> {
+  try {
+    return await rawAuth();
+  } catch (error) {
+    if (isNextInternalSignal(error)) {
+      throw error;
+    }
+    console.error("auth() failed:", error);
+    return null;
+  }
+}
+
+export { handlers, signIn, signOut };

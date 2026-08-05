@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { MobileNav } from "@/components/mobile-nav";
+import { isNextInternalSignal } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/", label: "Découvrir" },
@@ -18,15 +19,23 @@ const NAV_LINKS = [
 ];
 
 export async function SiteHeader() {
-  const session = await auth();
-
+  let session: Awaited<ReturnType<typeof auth>> = null;
   let creditBalance: number | null = null;
-  if (session?.user?.id) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { creditBalance: true },
-    });
-    creditBalance = user?.creditBalance ?? null;
+
+  try {
+    session = await auth();
+    if (session?.user?.id) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { creditBalance: true },
+      });
+      creditBalance = user?.creditBalance ?? null;
+    }
+  } catch (error) {
+    if (isNextInternalSignal(error)) {
+      throw error;
+    }
+    console.error("SiteHeader failed to load session:", error);
   }
 
   return (
