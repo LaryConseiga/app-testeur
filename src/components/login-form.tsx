@@ -91,6 +91,10 @@ export function LoginForm() {
             Code envoyé à{" "}
             <span className="font-medium text-foreground">{identity.email}</span>
           </p>
+          <p className="text-xs text-muted-foreground">
+            Vous ne le voyez pas ? Pensez à vérifier vos courriers indésirables
+            (spams).
+          </p>
 
           <FormField
             control={codeForm.control}
